@@ -48,6 +48,13 @@ public class BacnetClient {
                 discoverDeviceProperties(client, device);
             }
         }
+        try {
+            int sec = 20;
+            log.info("Waiting {} seconds for bacnet messages to arrive.", sec);
+            Thread.sleep(sec * 1000);
+        } catch (InterruptedException e) {
+            log.debug("Interupted. That's ok");
+        }
         log.info("Done.");
         client.stop();
     }
