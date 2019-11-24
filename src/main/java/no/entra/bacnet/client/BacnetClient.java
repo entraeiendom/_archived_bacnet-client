@@ -2,6 +2,7 @@ package no.entra.bacnet.client;
 
 import com.serotonin.bacnet4j.npdu.ip.IpNetwork;
 import com.serotonin.bacnet4j.npdu.ip.IpNetworkBuilder;
+import org.code_house.bacnet4j.wrapper.api.BacNetClientException;
 import org.code_house.bacnet4j.wrapper.api.BacNetToJavaConverter;
 import org.code_house.bacnet4j.wrapper.api.Device;
 import org.code_house.bacnet4j.wrapper.api.Property;
@@ -34,55 +35,48 @@ public class BacnetClient {
         client.start();
 
         if (discoverDevcices) {
-            discoverDeviceProperties(client);
+            Set<Device> devices = discoverDeviceProperties(client);
+
+            Random random = new Random();
+            for (Device device : devices) {
+                try {
+                    Thread.sleep(random.nextInt(500));
+                } catch (InterruptedException e) {
+                    log.trace("Interupded");
+                }
+                log.info("Discover Device: {}", device);
+                discoverDeviceProperties(client, device);
+            }
         }
         log.info("Done.");
         client.stop();
     }
 
-    public static void discoverDeviceProperties(BacNetIpClient client) {
+    public static Set<Device> discoverDeviceProperties(BacNetIpClient client) {
         log.info("Discovering devices.");
 
         Set<Device> devices = client.discoverDevices(5000); // given number is timeout in millis
         log.info("Found devices: " + devices.size());
         //serialize(devices, "devices.ser");
 
-        Random random = new Random();
-        for (Device device : devices) {
-            try {
-                Thread.sleep(random.nextInt(500));
-            } catch (InterruptedException e) {
-                log.trace("Interupded");
-            }
-            log.info("Device: {}", device);
-            discoverDeviceProperties(client, device);
-        }
+       return devices;
     }
 
     public static void discoverDeviceProperties(BacNetIpClient client, Device device) {
         try {
             List<Property> deviceProperties = client.getDeviceProperties(device);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                log.trace("Interupded");
-            }
 
             if (deviceProperties != null) {
                 log.info("Device name: {} has {} properties.", device.getName(), deviceProperties.size());
                 for (Property property : deviceProperties) {
                     log.info("Device: {}, Property {}. Looking for value.", device.getName(), property);
                     BacNetToJavaConverter<String> converter = new StringBacNetToJavaConverter();
-                    /*
                     try {
-                        ReadPropertyAck presentValue = client.getRawPropertyValue(property);
-                        String propertyValue = client.convertPropertyValue(presentValue, converter);
-                        log.info("Device name: {}; Property name: {}; value {} ", device.getName(), property.getName(), propertyValue);
-                        serializeWithByteQueue(presentValue, "device-" + device.getInstanceNumber() + "-property-" + property.getName());
-                    } catch (BacNetUnknownPropertyException e) {
-                        log.info("Property could not be read. Device name: {} Property name: {}, Property: {}. ", device.getName(), property.getName(), property);
+                    String presentValue = client.getPropertyValue(property, converter);
+                    log.info("Device name: {}; Property name: {}; value {} ", device.getName(), property.getName(), presentValue);
+                    } catch (BacNetClientException e) {
+                        log.debug("Property could not be read. Device name: {} Property name: {}, Property: {}. ", device.getName(), property.getName(), property);
                     }
-                     */
                 }
             } else {
                 log.debug("No device properties found for device {}", device);
