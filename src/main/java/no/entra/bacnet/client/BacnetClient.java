@@ -23,7 +23,7 @@ public class BacnetClient {
         boolean discoverDevcices = true;
         IpNetwork ipNetwork = null;
         String ip = "192.168.1.31";
-        String broadcast = "192.168.1.255";
+        String broadcast = "255.255.255.255";
         int port = 47808;
         ipNetwork = new IpNetworkBuilder()
                 .withLocalBindAddress(ip)
