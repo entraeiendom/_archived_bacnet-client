@@ -64,6 +64,15 @@ public class BacnetClient {
                 findPropertyValues(client,device,availableProperties);
             }
         }
+        try {
+            int sec = 20;
+            log.info("Waiting {} seconds for bacnet messages to arrive.", sec);
+            Thread.sleep(sec * 1000);
+        } catch (InterruptedException e) {
+            log.debug("Interupted. That's ok");
+        }
+        log.info("Done.");
+        client.stop();
     }
 
     public static Set<Device> discoverDeviceProperties(BacNetIpClient client) {
