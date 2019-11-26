@@ -17,13 +17,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class BacnetClient {
     private static final Logger log = getLogger(BacnetClient.class);
+    private static boolean findAllPropertyValues = true;
+    private static boolean discoverDevcices = true;
+    private static boolean findDeviceProprperties = true;
 
     public static void main(String[] args) {
         int clientDeviceId = 2002;
-        boolean discoverDevcices = true;
         IpNetwork ipNetwork = null;
-        String ip = "192.168.1.31";
+        String ip = "192.168.1.250";
+        ip = "0.0.0.0";
         String broadcast = "192.168.1.255";
+        broadcast = "255.255.255.255";
         int port = 47808;
         ipNetwork = new IpNetworkBuilder()
                 .withLocalBindAddress(ip)
@@ -34,22 +38,32 @@ public class BacnetClient {
         BacNetIpClient client = new BacNetIpClient(ipNetwork, clientDeviceId);
         client.start();
 
+        Set<Device> devicesFound = null;
         if (discoverDevcices) {
-            Set<Device> devices = discoverDeviceProperties(client);
+            devicesFound = discoverDeviceProperties(client);
+        }
 
-            Random random = new Random();
-            for (Device device : devices) {
-                try {
-                    Thread.sleep(random.nextInt(500));
-                } catch (InterruptedException e) {
-                    log.trace("Interupded");
-                }
-                log.info("Discover Device: {}", device);
-                discoverDeviceProperties(client, device);
-            }
+        if (findDeviceProprperties && devicesFound != null) {
+            scanPropertiesForAllDevices(client, devicesFound);
         }
         log.info("Done.");
         client.stop();
+    }
+
+    public static void scanPropertiesForAllDevices(BacNetIpClient client, Set<Device> devices) {
+        Random random = new Random();
+        for (Device device : devices) {
+            try {
+                Thread.sleep(random.nextInt(500));
+            } catch (InterruptedException e) {
+                log.trace("Interupted");
+            }
+            log.info("Discover Device: {}", device);
+            List<Property> availableProperties = discoverDeviceProperties(client, device);
+            if(findAllPropertyValues && availableProperties != null) {
+                findPropertyValues(client,device,availableProperties);
+            }
+        }
     }
 
     public static Set<Device> discoverDeviceProperties(BacNetIpClient client) {
@@ -59,30 +73,35 @@ public class BacnetClient {
         log.info("Found devices: " + devices.size());
         //serialize(devices, "devices.ser");
 
-       return devices;
+        return devices;
     }
 
-    public static void discoverDeviceProperties(BacNetIpClient client, Device device) {
+    public static List<Property> discoverDeviceProperties(BacNetIpClient client, Device device) {
+        List<Property> deviceProperties = null;
         try {
-            List<Property> deviceProperties = client.getDeviceProperties(device);
+            deviceProperties = client.getDeviceProperties(device);
 
             if (deviceProperties != null) {
                 log.info("Device name: {} has {} properties.", device.getName(), deviceProperties.size());
-                for (Property property : deviceProperties) {
-                    log.info("Device: {}, Property {}. Looking for value.", device.getName(), property);
-                    BacNetToJavaConverter<String> converter = new StringBacNetToJavaConverter();
-                    try {
-                    String presentValue = client.getPropertyValue(property, converter);
-                    log.info("Device name: {}; Property name: {}; value {} ", device.getName(), property.getName(), presentValue);
-                    } catch (BacNetClientException e) {
-                        log.debug("Property could not be read. Device name: {} Property name: {}, Property: {}. ", device.getName(), property.getName(), property);
-                    }
-                }
             } else {
                 log.debug("No device properties found for device {}", device);
             }
         } catch (Exception e) {
             log.info("Failed to find info for device {}", device, e);
+        }
+        return deviceProperties;
+    }
+
+    public static void findPropertyValues(BacNetIpClient client, Device device, List<Property> deviceProperties) {
+        for (Property property : deviceProperties) {
+            log.info("Device: {}, Property {}. Looking for value.", device.getName(), property);
+            BacNetToJavaConverter<String> converter = new StringBacNetToJavaConverter();
+            try {
+                String presentValue = client.getPropertyValue(property, converter);
+                log.info("Device name: {}; Property name: {}; value {} ", device.getName(), property.getName(), presentValue);
+            } catch (BacNetClientException e) {
+                log.debug("Property could not be read. Device name: {} Property name: {}, Property: {}. ", device.getName(), property.getName(), property);
+            }
         }
     }
 
