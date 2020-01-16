@@ -40,7 +40,7 @@ public class BacnetClient {
 
         Set<Device> devicesFound = null;
         if (discoverDevcices) {
-            devicesFound = discoverDeviceProperties(client);
+            devicesFound = scanForDevices(client);
         }
 
         if (findDeviceProprperties && devicesFound != null) {
@@ -59,7 +59,7 @@ public class BacnetClient {
                 log.trace("Interupted");
             }
             log.info("Discover Device: {}", device);
-            List<Property> availableProperties = discoverDeviceProperties(client, device);
+            List<Property> availableProperties = scanForDevices(client, device);
             if(findAllPropertyValues && availableProperties != null) {
                 findPropertyValues(client,device,availableProperties);
             }
@@ -75,7 +75,7 @@ public class BacnetClient {
         client.stop();
     }
 
-    public static Set<Device> discoverDeviceProperties(BacNetIpClient client) {
+    public static Set<Device> scanForDevices(BacNetIpClient client) {
         log.info("Discovering devices.");
 
         Set<Device> devices = client.discoverDevices(5000); // given number is timeout in millis
@@ -85,7 +85,7 @@ public class BacnetClient {
         return devices;
     }
 
-    public static List<Property> discoverDeviceProperties(BacNetIpClient client, Device device) {
+    public static List<Property> scanForDevices(BacNetIpClient client, Device device) {
         List<Property> deviceProperties = null;
         try {
             deviceProperties = client.getDeviceProperties(device);

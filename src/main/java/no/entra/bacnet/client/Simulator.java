@@ -28,9 +28,14 @@ public class Simulator {
 
     public static void main(String[] args) {
         Simulator simulator = null;
+        String hexString = "810400180a3f510cbac00120ffff00ff10080a07ae1a07ae";
+        if (args.length > 0) {
+            hexString = args[0];
+        }
+        log.info("Sending hexString: {}", hexString);
         try {
             simulator = new Simulator();
-            simulator.sendPeriodically(1);
+            simulator.sendPeriodically(60, hexString);
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -48,8 +53,8 @@ public class Simulator {
         }
     }
 
-    void sendPeriodically(int everyNthSecond) throws IOException {
-        String hexString = "810400180a3f510cbac00120ffff00ff10080a07ae1a07ae";
+    void sendPeriodically(int everyNthSecond, String hexString) throws IOException {
+
         do {
             buf = hexStringToByteArray(hexString);
             DatagramPacket packet = new DatagramPacket(buf, buf.length, sendToAddress, BACNET_DEFAULT_PORT);
