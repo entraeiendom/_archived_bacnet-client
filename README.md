@@ -1,3 +1,5 @@
+[![Build Status](https://jenkins.entraos.io/buildStatus/icon?job=bacnet-client)](https://jenkins.entraos.io/view/EntraOS/job/bacnet-client/)
+
 # bacnet-client
 Test communication to your Bacnet devices.
 
