@@ -41,7 +41,7 @@
         <dependency>
             <groupId>com.infiniteautomation</groupId>
             <artifactId>bacnet4j</artifactId>
-            <version>5.0.2</version>
+            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
